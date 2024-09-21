@@ -1,0 +1,246 @@
+working with advanced model concepts: (from videos(60))
+Model Inheritance:
+it is very powerfull feature in django
+5 types of model Inheritance
+
+1.Abstract Base class Inheritance:
+2.Multi table Inheritance
+3.multi level Inheritance   
+4.multiple Inheritance
+5.proxy model Inheritance
+
+1.Abstract base class model Inheritance:
+if serveral model class having  some common fields then it isnot recomended
+to write these fields in every model class seperatly beacuse it increases length of
+the code and reducess the readability.
+we have to seperate those common fields into a seperate model class  which is nothing but 
+base clas.if we extend this base class then automatically common fields will be inherited
+to every child class
+example:
+withoutinheritance:
+class Student(models.Model):
+    name=models.CharField(max_length=50)
+    email=models.EmailField()
+    address=models.CharField(max_length=250)
+    rollno=models.IntegerField()
+    marks=models.IntegerField()
+class Teacher(models.Model):
+    name=models.CharField(max_length=50)
+    email=models.EmailField()
+    address=models.CharField(max_length=250)
+    subject=models.CharField(max_length=25)
+    salary=models.FloatField()
+
+
+with abstactBase class  Inheritance:
+class ContactInfo(models.Model):
+    name=models.CharField(max_length=50)
+    email=models.EmailField()
+    address=models.CharField(max_length=250)
+    class Meta:
+        abstract=True
+Note:ContactInfo class is abstract class no table will be create in db 
+this type of Inheritance is applicable only at code level but not in db level
+class Student(ContactInfo):
+    rollno=models.IntegerField()
+    marks=models.IntegerField()
+    
+class Teacher(ContactInfo):
+    subject=models.CharField(max_length=25)
+    salary=models.FloatField()
+
+note:
+class Meta:
+        abstract=True
+it is for code resuable only but not create table for this class
+
+------------------------
+create example for advanced django project for mysql db:
+1.create project 2.add app in settings 
+python -m django startproject miproject1
+
+2.add mysql db details in settings
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'school',
+        'USER':'root',
+        'PASSWORD':'root',
+        'HOST':'localhost',
+        'PORT':3306,
+    }
+}
+3.create model
+
+execute below command
+ python manage.py makemigrations
+ python manage.py migrate 
+
+
+2.multi table Inheritance: 
+
+if base class is not abstract such type inheritance is called multi table inheritance
+class ContactInfo1(models.Model):
+    name=models.CharField(max_length=50)
+    email=models.EmailField()
+    address=models.CharField(max_length=250)
+
+Note: here this table also created in table and this will onnected to the child table as pointer 
+
+class Student1(ContactInfo1):
+    rollno=models.IntegerField()
+    marks=models.IntegerField()
+    
+class Teacher1(ContactInfo1):
+    subject=models.CharField(max_length=25)
+    salary=models.FloatField()
+
+in this case 3 table will be created child table will be maintain pointer to parent table to refer common properties
+
+3.Multi level inheritance:
+it is also part of multi table in heritance
+if p, child1 child2  here child2 pointing to child 1 and child1 is pointing to parent
+class Person(models.Model):
+    name=models.CharField(max_length=50)
+    age=models.IntegerField()
+    
+class Employee1(Person):
+    eno=models.IntegerField()
+    esal=models.FloatField()
+
+class Manager(Employee1):
+    exp=models.IntegerField()
+    team_size=models.IntegerField()
+
+multiple inheritance:
+class Parant1(models.Model):
+    f1=models.CharField(max_length=50)
+    f2=models.CharField(max_length=50)
+    
+class Parant2(models.Model):
+    f3=models.CharField(max_length=50,primary_key=True)
+    f4=models.CharField(max_length=50)
+    
+class Child1(Parant1,Parant2):
+    f5=models.CharField(max_length=50)
+    f6=models.CharField(max_length=50)
+
+Note:Parant fields should not contain common fields if its ther we will get error
+internally this inheritance also multiple inheritance
+
+---------------------
+Model Manager:
+Model manager is used to interact with the DATABASE
+we can get default model manager by using Model.objects property
+Model.objects is of type:django.db.models.manager.Manager
+
+example
+class person(model.Model):
+print(type(Person.objects))#django.db.models.manager.Manager
+
+based on our requirement we can define our own custom model manager 
+how to define our own custom model manager:
+-----------------------------------------
+step1:.we have to create child class model.Manager class
+whenever we are all() method internally it will call get_querySet() method to customize beheviour of get_querySet()
+we have to override this method in our CustomManager: class
+class CustomManager(models.Manager):
+
+example:
+models.py
+from django.db import models
+
+class CustomManager(models.Manager):
+    def get_queryset(self):
+        qs=super().get_queryset().order_by("eno")
+        return qs
+    
+        
+# Create your models here.
+class Employee(models.Model):
+    eno=models.IntegerField()
+    ename=models.CharField(max_length=100)
+    esal=models.FloatField()
+    eadd=models.CharField(max_length=250)
+    objects=CustomManager()
+
+
+views.py:
+from django.shortcuts import render
+from testapp.models import Employee
+def display_view(request):
+    emp_list=Employee.objects.all()
+    # here view level we doing ascending or i want do logic model level 
+    # then we have to write logic in model class by using model manager
+    return render(request,'testapp/index.html',{'emp_list':emp_list})
+
+note:instead of writing logic view class directly we can define logic in model clas itself
+here we can define our own new methods also
+scenario: 
+in view class entered the range we have to display that min and max salay then in model class directly we can write 
+new methods for that class
+from django.db import models
+class CustomManager(models.Manager):
+    def get_queryset(self):
+        qs=super().get_queryset().order_by("eno")
+        return qs
+    def get_sal_range(self,min_sal,max_sal):
+        qs1=super().get_queryset().filter(esal__range=(min_sal,max_sal))
+        return qs1
+        
+# Create your models here.
+class Employee(models.Model):
+    eno=models.IntegerField()
+    ename=models.CharField(max_length=100)
+    esal=models.FloatField()
+    eadd=models.CharField(max_length=250)
+    objects=CustomManager()
+
+
+
+
+
+
+
+
+proxy Model inheritance:
+for the same model we can provide customized view without touching the DATABASE
+this is posible by using proxy model inheritance
+
+in this inheritance no new table wont be created and new proxy model also pointing to same old table 
+example:
+class Employee:
+    fields
+
+class proxyEmployee(Employee):
+      class Meta:
+         proxy=True
+Note :both employee and proxyEmployee are pointing to same table only
+
+when to use proxy if the scenario same table want display different ways based on our requirement 
+from django.db import models
+
+class CustomManager1(models.Manager):
+    def get_queryset(self) -> models.QuerySet:
+        return super().get_queryset().filter(esal__gte=5000)
+    
+    
+class CustomManager2(models.Manager):
+    def get_queryset(self) -> models.QuerySet:
+        return super().get_queryset().filter(esal__lte=5000)
+
+class Employee(models.Model):
+    eno=models.IntegerField()
+    ename=models.CharField(max_length=100)
+    esal=models.FloatField()
+    eadd=models.CharField(max_length=250)
+    objects=CustomManager1()
+   
+class proxyEmployee(Employee):
+    objects=CustomManager2()
+    class Meta:
+        proxy=True
+Here ther two class are using same table  and implementing different model.manager class to display data
+
+
+

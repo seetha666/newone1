@@ -1,0 +1,193 @@
+working with django middleware:
+at pre prossing of request or at post processing of request if we want perform
+any activity we should go for middleware 
+its filter concepts in java servlet
+before hit view  if we want processing our request we need use middleware
+
+commonmiddleware
+
+based on our requirement we can configure our own middlewares also
+Every customized middleware is a python class and it is the child class of object
+
+some some commonmiddlewares are provided by django:
+MIDDLEWARE = [
+    'django.middleware.security.SecurityMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.common.CommonMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware',
+    'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django.contrib.messages.middleware.MessageMiddleware',
+    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+]
+
+how can i creat my own middleware?
+Every customized middleware is a python class and it the child class of object
+class A(object):
+classA:
+
+this python class should contains 2 mandatory methods and 3 optional methods
+1.def __init__(self,get_response):
+#get_response response is function which can be used to send a request to the next level and get required response
+#this method will be executed only once at the time of creating middleware class object which is mostly happen at the time of server startup
+2. def __call__(self,request):
+#this method will be executed for every times  ex:if we send 10 requests this method will be executed 10times
+#code for preprocessing of request
+response=self.get_response(request)#trigger request to the next level
+#code for post processing request
+return response
+#Middleware classes we have to define inside the middleware.py file(inside app folder)
+
+execution flow middleware:
+http://127.0.0.1:8000/hello
+
+then commonmiddleware will be executed so that / will be added
+http://127.0.0.1:8000/hello/
+
+first requst will go middleware
+next executionflowmiddleware class  int that 
+init method will be executed 
+next pre processing logic will be executed
+after view function will be executed
+next post processing logic will be executed
+
+step1
+from django.shortcuts import render
+class ExecutionFlowMiddleware(object):
+    def __init__(self,get_response):
+        print("init method execution.......")
+        self.get_response=get_response
+        
+        
+    def __call__(self, request):
+        print("processing request")
+        response=self.get_response(request)
+        print("post processing")
+        return render(request,)
+
+step2
+from django.shortcuts import render
+from django.http import HttpResponse
+def welcome_view(request):
+    print("viwe function is executed")
+    return HttpResponse('<h1>custom middleware demo</h1>')
+
+
+how to write a code middlewareapllication showing application under maintanance
+----------------------------------------------------------------------------------
+class AppMaintainceMiddleware(object):
+    def __init__(self,request):
+        pass
+    
+    def __call__(self, request):
+        return HttpResponse('<h1>currently application is under maintaince please try after two days </h1>')
+        
+settings.py
+MIDDLEWARE = [
+    ------
+    -----
+    'testapp.middleware.AppMaintainceMiddleware',
+]
+
+
+
+from django.shortcuts import render
+from django.http import HttpResponse
+def welcome_view(request):
+    print("viwe function is executed")
+    return HttpResponse('<h1>custom middleware demo</h1>')
+
+
+middlewareapllication to show meaningfull response if view function raises any error:
+------------------------------------------------------------------------------------
+in the middleware we can define the following method which will be executed if view function raises any error
+process_exception(self,request,exception)
+
+example:
+from django.shortcuts import render
+from django.http import HttpResponse
+class ErrorMessageMiddleware(object):
+    def __init__(self,get_response):
+        print("init method execution.......")
+        self.get_response=get_response
+        
+        
+    def __call__(self, request):
+        response=self.get_response(request)
+        return response
+    
+    def process_exception(self,request,exception):
+        return HttpResponse(f"<h1>current we are facing some technical problem "
+                            f"please try after some  timethe raised exception is:"
+           f" {exception.__class__.__name__}  <br>the exception message is:{exception}</br>  </h1>")
+
+views.py:
+
+from django.shortcuts import render
+from django.http import HttpResponse
+def home_page_view(request):
+    print(10/0)
+    return HttpResponse("<h3>Hello this is from form view function</h3>")
+
+MIDDLEWARE = [
+   ------
+   ------
+    'testapp.middleware.ErrorMessageMiddleware',
+]
+---------------------------
+multiple middleware:
+
+middleware.py:
+class FirstMiddleWare(object):
+    def __init__(self,get_response):
+        self.get_response=get_response
+        
+    def __call__(self,request):
+        print("this line printed middleware-1 before processing")
+        response=self.get_response(request)
+        print("this line printed middleware-1 after processing")
+        return response
+    
+    
+class SecondMiddleWare(object):
+    def __init__(self,get_response):
+        self.get_response=get_response
+        
+    def __call__(self,request):
+        print("this line printed middleware-2 before processing")
+        response=self.get_response(request)
+        print("this line printed middleware-2 after processing")
+        return response
+
+---
+settings.py:
+Middleware[
+    ----
+    -----
+'testapp.middleware.FirstMiddleWare',
+'testapp.middleware.SecondMiddleWare'
+
+]
+
+urls.py
+from django.urls import path
+from testapp import views
+
+urlpatterns = [
+    path('admin/', admin.site.urls),
+    path('hello/', views.home_page_view),
+]
+
+from django.shortcuts import render
+from django.http import HttpResponse
+def home_page_view(request):
+    print("this line is printed by view function")
+    return HttpResponse("<h1>Hello this is from view function</h1>")
+o/p:
+this line printed middleware-1 before processing
+this line printed middleware-2 before processing
+this line is printed by view function
+this line printed middleware-2 after processing
+this line printed middleware-1 after processing
+
+----------------------------
+what is signals in django?

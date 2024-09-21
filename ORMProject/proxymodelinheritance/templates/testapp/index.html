@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css" 
+    integrity="sha384-xOolHFLEh07PJGoPkLv1IbcEPTNtaed2xpHsD9ESMhqIYd0nLMwNLD69Npy4HI+N" crossorigin="anonymous">
+    <title></title>
+</head>
+<body>
+  <div class="container mt-4">
+    <!-- Search Form -->
+    <!-- <form method="GET" class="form-inline mb-3">
+        <input type="text" name="search" class="form-control mr-2" placeholder="Search Employees" value="{{ request.GET.search }}">
+        <button type="submit" class="btn btn-primary">Search</button>
+    </form> -->
+    <form method="GET" class="form-inline">
+      <select name="salaryrange" class="form-control mr-2" onchange="updateSearchInput(this.value)">
+          <option value="" {% if request.GET.salaryrange == "ALL" %}selected{% endif %}>All</option>
+          <option value="lessthan5000" {% if request.GET.salaryrange == "lessthan5000" %}selected{% endif %}>Less than 5000</option>
+          <option value="graterthan5000" {% if request.GET.salaryrange == "graterthan5000" %}selected{% endif %}>Greater than 5000</option>
+      </select>
+      
+      <!-- Search Input Field -->
+      <!-- <input type="text" class="form-control mr-2" id="searchInput" placeholder="Selected Option" value="{{ request.GET.salaryrange }}" readonly> -->
+  
+      <button type="submit" class="btn btn-secondary">Search</button>
+  </form>
+  
+    <table class="table table-striped table-dark">
+        <thead>
+          <tr>
+            <th scope="col">ENO</th>
+            <th scope="col">ENAME</th>
+            <th scope="col">ESAL</th>
+            <th scope="col">ADRESS</th>
+          </tr>
+        </thead>
+        {%if emp_list%}
+        <tbody>
+            
+            {%for emp in emp_list%}
+          <tr>
+            <td>{{emp.eno}}</td>
+            <td>{{emp.ename}}</td>
+            <td>${{emp.esal}}</td>
+            <td>{{emp.eadd}}</td>
+          </tr>
+          {%endfor%}
+        </tbody>
+        {%else%}
+        <p> There are not records found</p>
+        {%endif%}
+      </table>
+      </div>
+</body>
+</html>
